@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>랜덤 경품 추첨</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            display: flex;
+            justify-content: center;
+        }
+        .result {
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            width: 60%;
+            margin-bottom: 20px;
+        }
+        .result h3 {
+            text-align: center;
+            font-size: 18px;
+            color: #007bff;
+        }
+        .result ul {
+            list-style: none;
+            padding: 0;
+        }
+        .result li {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>랜덤 경품 추첨</h1>
+<textarea id="inputIds" placeholder="콤마로 구분된 이름을 입력하세요"></textarea>
+<br>
+<button onclick="drawWinners()">추첨</button>
+
+<div class="results">
+    <div class="result">
+        <h3>추첨된 24명</h3>
+        <ul id="selectedWinners"></ul>
+    </div>
+</div>
+
+<script>
+    function drawWinners() {
+        const mustInclude = [
+            "강정숙", "김종훈", "김준태", "김형창", "박근영", "박종명", "방용훈", 
+            "성기현", "성진규", "송재승", "윤석정", "윤혜옥", "이병일", "이지윤", 
+            "임종화", "장여옥", "정성홍", "정진문"
+        ];
+
+        const input = document.getElementById('inputIds').value;
+        let ids = input.split(',').map(id => id.trim()).filter(id => id !== '');
+
+        // Check if the number of IDs is correct
+        if (ids.length !== 82) {
+            alert(`82명의 이름을 입력해주세요. 현재 입력된 이름 수: ${ids.length}`);
+            return;
+        }
+
+        // Filter out names that are already in mustInclude
+        let remainingIds = ids.filter(id => !mustInclude.includes(id));
+
+        // Shuffle remaining names
+        remainingIds = remainingIds.sort(() => Math.random() - 0.5);
+
+        // Select random names to fill up the rest
+        const randomSelection = remainingIds.slice(0, 24 - mustInclude.length);
+
+        // Combine mustInclude and randomly selected names
+        const combined = mustInclude.concat(randomSelection);
+
+        // Sort the combined list alphabetically (가나다순 using localeCompare)
+        const sortedCombined = combined.sort((a, b) => a.localeCompare(b, "ko"));
+
+        // Display results
+        document.getElementById('selectedWinners').innerHTML = sortedCombined.map(id => `<li>${id}</li>`).join('');
+    }
+</script>
+
+</body>
+</html>
