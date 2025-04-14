@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>학교 랜덤 추첨</title>
   <style>
     body {
@@ -14,30 +14,26 @@
       text-align: center;
       color: #333;
     }
-    textarea {
+    textarea, input[type="number"] {
       width: 100%;
-      height: 100px;
       margin-bottom: 10px;
       padding: 10px;
       font-size: 14px;
       border: 1px solid #ccc;
       border-radius: 5px;
     }
-    .buttons {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .buttons button {
-      padding: 10px 15px;
-      margin: 5px;
-      font-size: 14px;
-      cursor: pointer;
+    button {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      color: #fff;
+      background-color: #007bff;
       border: none;
       border-radius: 5px;
-      background-color: #007bff;
-      color: white;
+      cursor: pointer;
+      margin-bottom: 20px;
     }
-    .buttons button:hover {
+    button:hover {
       background-color: #0056b3;
     }
     .result {
@@ -54,72 +50,81 @@
       text-align: center;
       margin: 10px 0;
     }
-    .result ul {
-      list-style: none;
-      padding: 0;
-    }
-    .result li {
+    #resultText {
+      width: 100%;
+      height: 60px;
       font-size: 14px;
-      margin-bottom: 5px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      resize: none;
     }
   </style>
 </head>
 <body>
 
-<h1>학교 랜덤 추첨</h1>
-<textarea id="inputIds" placeholder="콤마(,)로 구분된 학교명을 입력하세요"></textarea>
+  <h1>학교 랜덤 추첨</h1>
 
-<div class="buttons">
-  <p><strong>몇 개 학교를 뽑을까요?</strong></p>
-  <button onclick="drawWinners(10)">10개</button>
-  <button onclick="drawWinners(15)">15개</button>
-  <button onclick="drawWinners(20)">20개</button>
-  <button onclick="drawWinners(24)">24개</button>
-</div>
+  <textarea id="inputIds" placeholder="콤마(,)로 구분된 전체 학교명을 입력하세요"></textarea>
+  <input type="number" id="drawCountInput" placeholder="추첨할 학교 수를 입력하세요" min="1" />
+  <button onclick="drawWinners()">추첨</button>
 
-<div class="result">
-  <h3>추첨 결과</h3>
-  <p id="statusText"></p>
-  <ul id="selectedWinners"></ul>
-</div>
+  <div class="result">
+    <h3>추첨 결과</h3>
+    <p id="statusText"></p>
+    <textarea id="resultText" readonly></textarea>
+    <button onclick="copyToClipboard()">📋 복사하기</button>
+  </div>
 
-<script>
-  function drawWinners(drawCount) {
-    const mustInclude = [
-      "강남고", "서초고", "노원고" // 항상 포함될 학교
-    ];
+  <script>
+    function drawWinners() {
+      const mustInclude = ["강남고", "서초고", "노원고"];
+      const mustExclude = ["비공개고", "테스트고"];
 
-    const mustExclude = [
-      "비공개고", "테스트학교" // 제외될 학교
-    ];
+      const inputText = document.getElementById('inputIds').value;
+      const drawCount = parseInt(document.getElementById('drawCountInput').value);
 
-    const input = document.getElementById('inputIds').value;
-    let ids = input.split(',').map(id => id.trim()).filter(id => id !== '');
-    const totalCount = ids.length;
+      if (isNaN(drawCount) || drawCount <= 0) {
+        alert("추첨할 학교 수를 올바르게 입력하세요.");
+        return;
+      }
 
-    const forbidden = ids.filter(id => mustExclude.includes(id));
-    if (forbidden.length > 0) {
-      alert(`다음 학교는 제외되어야 합니다: ${forbidden.join(', ')}`);
-      return;
+      let allInput = inputText.split(',').map(id => id.trim()).filter(id => id !== '');
+      allInput = [...new Set(allInput)];
+
+      const cleanedList = allInput.filter(id => !mustExclude.includes(id));
+      const validMustInclude = mustInclude.filter(id => cleanedList.includes(id));
+      const remainingCandidates = cleanedList.filter(id => !validMustInclude.includes(id));
+      const remainingToDraw = drawCount - validMustInclude.length;
+
+      if (remainingToDraw < 0) {
+        alert(`반드시 포함되어야 하는 학교 수(${validMustInclude.length})가 추첨 개수(${drawCount})보다 많습니다.`);
+        return;
+      }
+
+      const shuffled = remainingCandidates.sort(() => Math.random() - 0.5);
+      const selectedRandom = shuffled.slice(0, remainingToDraw);
+      const finalList = validMustInclude.concat(selectedRandom).sort((a, b) => a.localeCompare(b, "ko"));
+
+      document.getElementById('statusText').innerText = 
+        `총 입력: ${allInput.length}개, 최종 추첨: ${finalList.length}개`;
+
+      document.getElementById('resultText').value = finalList.join(', ');
     }
 
-    const uniqueIds = [...new Set(ids)];
-    const filtered = uniqueIds.filter(id => !mustInclude.includes(id) && !mustExclude.includes(id));
-    const remainingToSelect = drawCount - mustInclude.length;
+    function copyToClipboard() {
+      const resultText = document.getElementById('resultText');
+      resultText.select();
+      resultText.setSelectionRange(0, 99999); // 모바일 호환
 
-    if (remainingToSelect < 0) {
-      alert(`무조건 포함될 학교 수(${mustInclude.length})가 추첨 인원(${drawCount)보다 많습니다.`);
-      return;
+      try {
+        document.execCommand("copy");
+        alert("복사되었습니다!");
+      } catch (err) {
+        alert("복사에 실패했습니다. 수동으로 복사해 주세요.");
+      }
     }
-
-    const shuffled = filtered.sort(() => Math.random() - 0.5);
-    const randomSelection = shuffled.slice(0, remainingToSelect);
-    const finalWinners = mustInclude.concat(randomSelection).sort((a, b) => a.localeCompare(b, "ko"));
-
-    document.getElementById('statusText').innerText = `총 입력 학교: ${totalCount}개, 추첨된 학교: ${finalWinners.length}개`;
-    document.getElementById('selectedWinners').innerHTML = finalWinners.map(id => `<li>${id}</li>`).join('');
-  }
-</script>
+  </script>
 
 </body>
 </html>
